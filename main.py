@@ -89,21 +89,6 @@ def apollo(payload_oai):
     response = requests.post(url, headers=headers, json=payload)
     return response.json()
 
-
-def parsear_leads(respuesta):
-    bloques = respuesta.strip().split("---")
-    leads = []
-
-    for bloque in bloques:
-        lead = {}
-        for linea in bloque.strip().split("\n"):
-            if ":" in linea:
-                clave, valor = linea.split(":", 1)
-                lead[clave.strip()] = valor.strip()
-        if lead:
-            leads.append(lead)
-    return leads
-
 # -------------------------------- Interfaz (MAIN)-----------------------------------------
 st.markdown("## ¡Bienvenido!")
 instrucciones()
