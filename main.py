@@ -15,10 +15,11 @@ import time
 import codecs
 import requests
 import streamlit as st
-import pandas as pd
-import asyncio
-from dotenv import load_dotenv, find_dotenv
 from openai import OpenAI
+import pandas as pd
+import json
+from dotenv import load_dotenv, find_dotenv
+from utils.prompts import construir_prompt #Esto toma el archivo de prompts.py
 # --------------------------- Seteadores ----------------------------------------------
 st.set_page_config(page_title = "X Leadflow V.4.0.0",
                    page_icon = "📝",
@@ -40,24 +41,9 @@ class Cliente:
         self.zona = zona
         self.tamanio = tamanio
 
-#agente_buscador = Agent(name="buscador",
-                        #instructions="Tu tarea es delegar a otros agentes ")
-
 # --------------------------- Funciones -----------------------------------------------
-def buscar_denue(palabra, lat, lon, radio, token):
-    url = f"https://www.inegi.org.mx/app/api/denue/v1/consulta/buscar/{palabra}/{lat},{lon}/{radio}/{token}"
-    response = requests.get(url)
-    print(url)
-    if response.status_code == 200:
-        data = response.json()
-        df = pd.DataFrame(data)
-        return df
-    else:
-        print(f"Error {response.status_code}: No se pudo consultar la API")
-        return None
-
 def instrucciones():
-    with codecs.open("data/instrucciones2.txt", "r", encoding="utf-8") as f:
+    with codecs.open("data/instrucciones.txt", "r", encoding="utf-8") as f:
         fi = f.read()
     file = fi.split('\n')
     for linea in file:
@@ -66,11 +52,20 @@ def instrucciones():
 def agente(cliente):
     datos = vars(cliente)
     try:
-        agente = client.responses.create(
-            model = "gpt-4.1",
-            input = construir_prompt("data/promptD6.txt", datos)
+        traductor = client.chat.completions.create(
+            model="gpt-4.1",
+            messages=[{"role": "user", "content": construir_prompt("data/prompt.txt", datos)}],
+            temperature=0
         )
-        return agente.output_text
+        
+        respuesta = traductor.choices[0].message.content.strip()
+        try:
+            payload = json.loads(respuesta)
+        except json.JSONDecodeError:
+            raise ValueError(f"No se pudo convertir a JSON: {respuesta}")
+
+        return payload
+    
     except Exception as e:
         st.error(f"Error al generar una respuesta: {str(e)}")
         return None
@@ -79,6 +74,22 @@ def agente(cliente):
         st.error(f"Algo alió mal. {str(e)}")
         return None
     
+def apollo(payload_oai):
+    url = "https://api.apollo.io/api/v1/mixed_people/search"
+
+    headers = {
+        "accept": "application/json",
+        "Cache-Control": "no-cache",
+        "Content-Type": "application/json",
+        "x-api-key": apollo_key
+    }
+
+    payload = payload_oai
+
+    response = requests.post(url, headers=headers, json=payload)
+    return response.json()
+
+
 def parsear_leads(respuesta):
     bloques = respuesta.strip().split("---")
     leads = []
@@ -132,7 +143,6 @@ producto = st.sidebar.text_input("Tu producto/servicio",
                                  placeholder="¿Qué ofreces específicamente?")
 zona = st.sidebar.text_input("Zona de cobertura", 
                              placeholder="Estados, regiones, ciudades")
-#prioridad = st.sidebar.pills("¿Qué datos son relevantes para ti?", ["Correos", "Telefonos", "Redes sociales"], selection_mode="multi")
 
 tamanio = st.sidebar.pills("Tamaño del cliente", ["Pequeño", "Mediano", "Grande"], selection_mode="multi")
 
@@ -148,22 +158,38 @@ if acuerdo:
 
             with st.spinner("Recopilando información..."):
                 cliente = Cliente(industria, postores, producto, zona, tamanio)
-
+                #Normalizamos los datos
                 p4 = agente(cliente)
+
+                # Rescatamos la normalización y hacemos la consulta
+                json_path = apollo(p4)
+                # Verificamos el contenido
+                with open(json_path, "r", encoding="utf-8") as f:
+                    leads_data = json.load(f)
+                print(f"Se cargaron {len(leads_data)} leads desde {json_path}")
+
+                # Cargar JSON directamente en un DataFrame
+                df = pd.read_json(json_path)
+
+                # Filtrar: país México, email y teléfono no vacíos
+                df_filtrado = df[
+                    (df["country"] == "Mexico") &
+                    (df["email"].notna()) &
+                    (df["organization_phone"].notna()) &
+                    (df['linkedin_url'].notna())
+                ]
+                # Guardar a CSV
+                csv_completo = df_filtrado.to_csv(f"leads_{cliente.industria}.csv", index=False)
+                print(f"Se guardaron {len(df_filtrado)} leads filtrados en leads_filtrados3.csv")
+
                 st.success("Clientes encontrados")
-                st.markdown(p4)
-
-                leads = parsear_leads(p4)
-                df = pd.DataFrame(leads)
-                csv_completo=df.to_csv(index=False)
-
-                #asyncio.run(root_agent(cliente)) 
+                st.markdown(df)
 
                 iz, der = st.columns([1,1], gap="small")
                 with iz:
                     st.download_button(
                         label = "Info completa",
-                        data = str(p4),
+                        data = str(json_path),
                         file_name = f"información_{cliente.industria}.txt",
                         mime = "text/plain"
                     )
