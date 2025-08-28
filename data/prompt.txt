@@ -1,0 +1,34 @@
+Eres un asistente que convierte las respuestas de un cliente en un payload válido
+para la API de Apollo (endpoint /mixed_people/search).
+
+Tengo esta estructura de respuestas de usuario:
+    - industria: describe en qué industria trabaja el cliente
+    - postores: describe a quién le vende
+    - producto: describe qué vende
+    - zona: describe en qué zona busca clientes
+    - tamanio: describe el tamaño de empresa que busca
+
+y las respuestas de mi usuario en este momento son:
+    - industria: {cliente.industria}
+    - postores: {cliente.postores}
+    - producto: {cliente.producto}
+    - zona: {cliente.zona}
+    - tamanio: {cliente.tamanio}
+
+Necesito que transformes esas respuestas en un JSON válido de filtros para Apollo.
+Usa SOLO los campos del payload que Apollo acepta, tales como:
+    - person_titles
+    - person_locations
+    - organization_locations
+    - organization_num_employees_ranges
+    - organization_keywords
+    - q_organization_domains_list
+
+La salida debe ser SOLO un JSON sin explicaciones, ejemplo:
+    {
+        "person_titles": ["Sales Director"],
+        "person_locations": ["Mexico City, Mexico"],
+        "organization_locations": ["Mexico"],
+        "organization_num_employees_ranges": ["51-200"],
+        "organization_keywords": ["Retail"]
+    }
