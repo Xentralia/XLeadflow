@@ -1,6 +1,7 @@
 # # # # # # # # # # # # # # # # # # # # # # # # # #
 #              Generador de leads                 #
-# V.4.0.0 //28 08 2025//                          #
+# V.4.0.0 //28 08 2025// Integracion de Apollo    #
+#                                                 #
 # Desplegado con streamlit y render               #
 # Agente impulsado con OpenAI y Apollo API        #
 # Desarrollador: Sergio Emiliano López Bautista   #
@@ -51,24 +52,22 @@ def instrucciones():
 
 def agente(cliente):
     datos = vars(cliente)
+    peticion = construir_prompt("data/prompt.txt", datos)
     try:
         traductor = client.chat.completions.create(
             model="gpt-4.1",
-            messages=[{"role": "user", "content": construir_prompt("data/prompt.txt", datos)}],
+            messages=[{"role": "user", 
+                       "content": peticion}
+                    ],
             temperature=0
         )
-        
         respuesta = traductor.choices[0].message.content.strip()
+
         try:
             payload = json.loads(respuesta)
         except json.JSONDecodeError:
             raise ValueError(f"No se pudo convertir a JSON: {respuesta}")
-
         return payload
-    
-    except Exception as e:
-        st.error(f"Error al generar una respuesta: {str(e)}")
-        return None
 
     except Exception as e:
         st.error(f"Algo alió mal. {str(e)}")
@@ -145,28 +144,31 @@ if acuerdo:
                 cliente = Cliente(industria, postores, producto, zona, tamanio)
                 #Normalizamos los datos
                 p4 = agente(cliente)
-
                 # Rescatamos la normalización y hacemos la consulta
                 json_path = apollo(p4)
-                # Verificamos el contenido
-                with open(json_path, "r", encoding="utf-8") as f:
-                    leads_data = json.load(f)
-                print(f"Se cargaron {len(leads_data)} leads desde {json_path}")
+
+                # Cargamos el contenido
+                #with open(json_path, "r", encoding="utf-8") as f:
+                    #leads_data = json.load(f)
+
+                print(f"Se cargaron {len(json_path)} leads desde {json_path}")
 
                 # Cargar JSON directamente en un DataFrame
-                df = pd.read_json(json_path)
+                df = pd.json_normalize(json_path)
+                #df = pd.read_json(json_path)
 
                 # Filtrar: país México, email y teléfono no vacíos
-                df_filtrado = df[
-                    (df["country"] == "Mexico") &
-                    (df["email"].notna()) &
-                    (df["organization_phone"].notna()) &
-                    (df['linkedin_url'].notna())
-                ]
+                #df_filtrado = df[
+                    #(df["country"] == "Mexico") &
+                    #(df["email"].notna()) &
+                    #(df["organization_phone"].notna()) &
+                    #(df['linkedin_url'].notna())
+                #]
                 # Guardar a CSV
-                csv_completo = df_filtrado.to_csv(f"leads_{cliente.industria}.csv", index=False)
-                print(f"Se guardaron {len(df_filtrado)} leads filtrados en leads_filtrados3.csv")
-
+                csv_completo = df.to_csv(f"leads_{cliente.industria}.csv", index=False)
+                #csv_completo = df_filtrado.to_csv(f"leads_{cliente.industria}.csv", index=False)
+                #print(f"Se guardaron {len(df)} leads filtrados en leads_filtrados3.csv")
+       
                 st.success("Clientes encontrados")
                 st.markdown(df)
 
