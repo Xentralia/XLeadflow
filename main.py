@@ -168,6 +168,7 @@ if acuerdo:
                 csv_completo = df.to_csv(f"leads_{cliente.industria}.csv", index=False)
                 #csv_completo = df_filtrado.to_csv(f"leads_{cliente.industria}.csv", index=False)
                 #print(f"Se guardaron {len(df)} leads filtrados en leads_filtrados3.csv")
+                
        
                 st.success("Clientes encontrados")
                 st.markdown(df)
