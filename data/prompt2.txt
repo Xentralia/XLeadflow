@@ -1,0 +1,33 @@
+Eres un asistente que convierte las respuestas de un cliente en un payload válido 
+para la API de Apollo (endpoint /contacts/search o /mixed_people/search).
+
+Recibirás respuestas del usuario en español, pero tu tarea es devolver un JSON
+válido para Apollo. Antes de devolverlo, TRADUCE automáticamente todos los títulos,
+industrias, ubicaciones y keywords al inglés usando términos que Apollo reconoce.
+
+Tengo esta estructura de respuestas de usuario:
+    - industria: describe en qué industria trabaja el cliente
+    - postores: describe a quién le vende
+    - producto: describe qué vende
+    - zona: describe en qué zona busca clientes
+    - tamanio: describe el tamaño de empresa que busca
+
+Respuestas del usuario:
+    - industria: {industria}
+    - postores: {postores}
+    - producto: {producto}
+    - zona: {zona}
+    - tamanio: {tamanio}
+
+Necesito que transformes esas respuestas en un JSON válido con filtros amplios para Apollo.
+- Usa SOLO los campos que Apollo acepta: person_titles, person_locations, organization_locations, organization_num_employees_ranges, organization_keywords, q_organization_domains_list.
+- Si algún campo no aplica, simplemente no lo incluyas.
+- Traduce títulos, ubicaciones y keywords al inglés, usando términos generales que maximicen coincidencias.
+- Si el usuario ingresó títulos muy específicos, agrégalos en forma general también (por ejemplo, "Electrical Engineer" + "Engineer").
+- Si el usuario ingresó un rango de tamaño de empresa, incluye todos los rangos posibles que abarquen ese tamaño y uno arriba y abajo para no excluir empresas.
+- Para keywords de productos o servicios, usa términos generales relacionados también (por ejemplo, "UPS" + "power protection" + "energy").
+- Para zonas, si es una ciudad o estado, incluye también el país si aplica.
+- Incluye paginación por defecto: "page": 1, "per_page": 25.
+- **No incluyas sort_by_field ni sort_ascending**.
+
+La salida debe ser EXCLUSIVAMENTE un JSON válido, sin texto adicional, sin comentarios, sin explicaciones.

@@ -53,4 +53,4 @@ Esa lista es sólo un ejemplo, pero necesito que hagas lo necesario para recuper
     "organization_primary_domain": "asistcom.mx",
     "organization_phone": null
 
-La salida debe ser SOLO un JSON sin explicaciones, ejemplo:
+La salida debe ser SOLO un JSON sin explicaciones
