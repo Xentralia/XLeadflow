@@ -152,15 +152,8 @@ if acuerdo:
                 # Cargar JSON directamente en un DataFrame
                 df = pd.json_normalize(json_path)
 
-                # Filtrar: país México, email y teléfono no vacíos
-                df_filtrado = df[
-                    #(df["country"] == "Mexico") &
-                    (df["email"].notna()) &
-                    (df["organization_phone"].notna()) &
-                    (df['linkedin_url'].notna())
-                ]
                 # Guardar a CSV
-                csv_completo = df_filtrado.to_csv(f"leads_{cliente.industria}.csv", index=False)
+                csv_completo = df.to_csv(f"leads_{cliente.industria}.csv", index=False)
                 print(f"Se guardaron {len(df)} leads filtrados en leads_filtrados3.csv")
                 
        
