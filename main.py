@@ -22,7 +22,7 @@ import json
 from dotenv import load_dotenv, find_dotenv
 from utils.prompts import construir_prompt #Esto toma el archivo de prompts.py
 # --------------------------- Seteadores ----------------------------------------------
-st.set_page_config(page_title = "X Leadflow V.4.0.0",
+st.set_page_config(page_title = "X Leadflow V.4.0.2",
                    page_icon = "📝",
                    layout="wide")
 
@@ -147,27 +147,21 @@ if acuerdo:
                 # Rescatamos la normalización y hacemos la consulta
                 json_path = apollo(p4)
 
-                # Cargamos el contenido
-                #with open(json_path, "r", encoding="utf-8") as f:
-                    #leads_data = json.load(f)
-
                 print(f"Se cargaron {len(json_path)} leads desde {json_path}")
 
                 # Cargar JSON directamente en un DataFrame
                 df = pd.json_normalize(json_path)
-                #df = pd.read_json(json_path)
 
                 # Filtrar: país México, email y teléfono no vacíos
-                #df_filtrado = df[
-                    #(df["country"] == "Mexico") &
-                    #(df["email"].notna()) &
-                    #(df["organization_phone"].notna()) &
-                    #(df['linkedin_url'].notna())
-                #]
+                df_filtrado = df[
+                    (df["country"] == "Mexico") &
+                    (df["email"].notna()) &
+                    (df["organization_phone"].notna()) &
+                    (df['linkedin_url'].notna())
+                ]
                 # Guardar a CSV
-                csv_completo = df.to_csv(f"leads_{cliente.industria}.csv", index=False)
-                #csv_completo = df_filtrado.to_csv(f"leads_{cliente.industria}.csv", index=False)
-                #print(f"Se guardaron {len(df)} leads filtrados en leads_filtrados3.csv")
+                csv_completo = df_filtrado.to_csv(f"leads_{cliente.industria}.csv", index=False)
+                print(f"Se guardaron {len(df)} leads filtrados en leads_filtrados3.csv")
                 
        
                 st.success("Clientes encontrados")
