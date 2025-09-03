@@ -52,7 +52,7 @@ def instrucciones():
 
 def agente(cliente):
     datos = vars(cliente)
-    peticion = construir_prompt("data/prompt.txt", datos)
+    peticion = construir_prompt("data/prompt2.txt", datos)
     try:
         traductor = client.chat.completions.create(
             model="gpt-4.1",
@@ -73,6 +73,54 @@ def agente(cliente):
         st.error(f"Algo alió mal. {str(e)}")
         return None
     
+def agente_amplio(cliente):
+    """
+    Genera un payload amplio para Apollo usando OpenAI,
+    traduciendo títulos, industrias, zonas y keywords al inglés.
+    """
+    datos = vars(cliente)
+    peticion = f"""
+        Eres un asistente que convierte las respuestas de un cliente en un payload válido 
+        para la API de Apollo (endpoint /contacts/search o /mixed_people/search).
+
+        Recibirás respuestas del usuario en español, pero tu tarea es devolver un JSON
+        válido para Apollo. Antes de devolverlo, TRADUCE automáticamente todos los títulos,
+        industrias, ubicaciones y keywords al inglés usando términos que Apollo reconoce.
+
+        Tengo esta estructura de respuestas de usuario:
+            - industria: {datos['industria']}
+            - postores: {datos['postores']}
+            - producto: {datos['producto']}
+            - zona: {datos['zona']}
+            - tamanio: {datos['tamanio']}
+
+        Necesito que transformes esas respuestas en un JSON válido con filtros amplios para Apollo.
+            - Usa SOLO los campos que Apollo acepta: person_titles, person_locations, organization_locations, organization_num_employees_ranges, organization_keywords, q_organization_domains_list.
+            - Traduce títulos, ubicaciones y keywords al inglés, usando términos generales que maximicen coincidencias.
+            - Para títulos muy específicos, agrégalos en forma general también.
+            - Para el tamaño de empresa, incluye rangos que abarquen el indicado y uno arriba y uno abajo.
+            - Para keywords de productos/servicios, incluye términos amplios relacionados.
+            - Para zonas, incluye también el país si aplica.
+            - Incluye paginación por defecto: "page": 1, "per_page": 25.
+            - No incluyas sort_by_field ni sort_ascending.
+
+        La salida debe ser EXCLUSIVAMENTE un JSON válido.
+        """
+
+    try:
+        respuesta = client.chat.completions.create(
+            model="gpt-4.1",
+            messages=[{"role": "user", "content": peticion}],
+            temperature=0
+        ).choices[0].message.content.strip()
+
+        payload = json.loads(respuesta)
+        return payload
+
+    except Exception as e:
+        st.error(f"Error generando payload: {e}")
+        return {}
+
 def apollo(payload_oai):
     url = "https://api.apollo.io/api/v1/mixed_people/search"
 
@@ -87,6 +135,25 @@ def apollo(payload_oai):
 
     response = requests.post(url, headers=headers, json=payload)
     return response.json()
+
+def apollo_contact(payload_oai):
+    url = "https://api.apollo.io/api/v1/contacts/search?sort_ascending=false"
+
+    headers = {
+        "accept": "application/json",
+        "Cache-Control": "no-cache",
+        "Content-Type": "application/json",
+        "x-api-key": apollo_key
+    }
+
+    payload_oai.pop("sort_by_field", None)
+    payload_oai.pop("sort_ascending", None)
+    response = requests.post(url, headers=headers, json=payload_oai)
+    if response.status_code==200:
+        return response.json()
+    else:
+        st.error(f"Ocurrió un inconveniente con la busqueda:{response.text}")
+        return {}
 
 # -------------------------------- Interfaz (MAIN)-----------------------------------------
 st.markdown("## ¡Bienvenido!")
@@ -143,19 +210,21 @@ if acuerdo:
             with st.spinner("Recopilando información..."):
                 cliente = Cliente(industria, postores, producto, zona, tamanio)
                 #Normalizamos los datos
-                p4 = agente(cliente)
+                p4 = agente_amplio(cliente)
+                print(p4)
                 # Rescatamos la normalización y hacemos la consulta
-                json_path = apollo(p4)
-
-                print(f"Se cargaron {len(json_path)} leads desde {json_path}")
+                json_path = apollo_contact(p4)
 
                 # Cargar JSON directamente en un DataFrame
-                df = pd.json_normalize(json_path)
+                if "contacts" in json_path:
+                    df = pd.json_normalize(json_path["contacts"])
+                else:
+                    df = pd.DataFrame()  # Vacío si no hay contactos
+
+                #df = pd.json_normalize(json_path)
 
                 # Guardar a CSV
-                csv_completo = df.to_csv(f"leads_{cliente.industria}.csv", index=False)
-                print(f"Se guardaron {len(df)} leads filtrados en leads_filtrados3.csv")
-                
+                csv_completo = df.to_csv(index=False)
        
                 st.success("Clientes encontrados")
                 st.markdown(df)
@@ -172,8 +241,9 @@ if acuerdo:
                     st.download_button(
                         label="Sólo leads en CSV",
                         data= csv_completo,
-                        file_name="leads_CSV.csv",
+                        file_name=f"leads_{cliente.industria}.csv",
                         mime="text/csv"
                     )
+
         else:
             st.sidebar.warning("Por favor completa todos los campos.")
