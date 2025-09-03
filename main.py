@@ -154,7 +154,7 @@ if acuerdo:
 
                 # Filtrar: país México, email y teléfono no vacíos
                 df_filtrado = df[
-                    (df["country"] == "Mexico") &
+                    #(df["country"] == "Mexico") &
                     (df["email"].notna()) &
                     (df["organization_phone"].notna()) &
                     (df['linkedin_url'].notna())
