@@ -95,7 +95,7 @@ def agente_amplio(cliente):
             - tamanio: {datos['tamanio']}
 
         Necesito que transformes esas respuestas en un JSON válido con filtros amplios para Apollo.
-            - Usa SOLO los campos que Apollo acepta: person_titles, person_locations, organization_locations, organization_num_employees_ranges, organization_keywords, q_organization_domains_list.
+            - Usa SOLO los campos que Apollo acepta: q_title, organization_keywords, q_country, organization_num_employees_ranges, q_organization_domains_list.
             - Traduce títulos, ubicaciones y keywords al inglés, usando términos generales que maximicen coincidencias.
             - Para títulos muy específicos, agrégalos en forma general también.
             - Para el tamaño de empresa, incluye rangos que abarquen el indicado y uno arriba y uno abajo.
@@ -121,7 +121,17 @@ def agente_amplio(cliente):
         st.error(f"Error generando payload: {e}")
         return {}
 
-def apollo(payload_oai):
+def transformar(payload_oai):
+    nuevo_payload = {}
+    for k, v in payload_oai.items():
+        if isinstance(v, list) and len(v) > 1 and k not in ["page", "per_page"]:
+            nuevo_payload[k] = {"or": v}
+        else:
+            nuevo_payload[k] = v
+    return nuevo_payload
+
+
+def apollo(payload_nuevo):
     url = "https://api.apollo.io/api/v1/mixed_people/search"
 
     headers = {
@@ -131,12 +141,12 @@ def apollo(payload_oai):
         "x-api-key": apollo_key
     }
 
-    payload = payload_oai
+    payload = payload_nuevo
 
     response = requests.post(url, headers=headers, json=payload)
     return response.json()
 
-def apollo_contact(payload_oai):
+def apollo_contact(payload_nuevo):
     url = "https://api.apollo.io/api/v1/contacts/search?sort_ascending=false"
 
     headers = {
@@ -146,9 +156,9 @@ def apollo_contact(payload_oai):
         "x-api-key": apollo_key
     }
 
-    payload_oai.pop("sort_by_field", None)
-    payload_oai.pop("sort_ascending", None)
-    response = requests.post(url, headers=headers, json=payload_oai)
+    payload_nuevo.pop("sort_by_field", None)
+    payload_nuevo.pop("sort_ascending", None)
+    response = requests.post(url, headers=headers, json=payload_nuevo)
     if response.status_code==200:
         return response.json()
     else:
@@ -221,13 +231,36 @@ if acuerdo:
                 else:
                     df = pd.DataFrame()  # Vacío si no hay contactos
 
-                #df = pd.json_normalize(json_path)
+                df_filtrado = df[
+                    (df["name"].notna()) &
+                    (df["linkedin_url"].notna()) &
+                    (df["title"].notna()) &
+                    (df["organization_name"].notna()) &
+                    (df["city"].notna()) &
+                    (df["state"].notna()) &
+                    (df["country"].notna()) &
+                    (df["email"].notna()) &
+                    (df["email_from_customer"].notna()) &
+                    (df["account.linkedin_url"].notna()) &
+                    (df["account.facebook_url"].notna()) &
+                    (df["account.primary_phone.number"].notna()) &
+                    (df["account.phone"].notna()) &
+                    (df["organization.linkedin_url"].notna())
+                ]
+
+                columnas_finales = [
+                    "name", "first_name", "last_name",
+                    "title", "organization_name",
+                    "city", "state", "country",
+                    "email", "linkedin_url", "organization.linkedin_url"
+                ]
+                df_final = df_filtrado[columnas_finales]
 
                 # Guardar a CSV
-                csv_completo = df.to_csv(index=False)
+                csv_completo = df_final.to_csv(index=False)
        
                 st.success("Clientes encontrados")
-                st.markdown(df)
+                st.dataframe(df)
 
                 iz, der = st.columns([1,1], gap="small")
                 with iz:
