@@ -74,10 +74,7 @@ def agente(cliente):
         return None
     
 def agente_amplio(cliente):
-    """
-    Genera un payload amplio para Apollo usando OpenAI,
-    traduciendo títulos, industrias, zonas y keywords al inglés.
-    """
+    
     datos = vars(cliente)
     peticion = f"""
         Eres un asistente que convierte las respuestas de un cliente en un payload válido 
