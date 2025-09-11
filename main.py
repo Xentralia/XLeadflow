@@ -74,17 +74,12 @@ def agente(cliente):
         return None
     
 def agente_amplio(cliente):
-    """
-    Genera un payload amplio para Apollo usando OpenAI,
-    traduciendo títulos, industrias, zonas y keywords al inglés.
-    """
     datos = vars(cliente)
-    peticion = construir_prompt("data/prompt3.txt",datos)
 
     try:
         respuesta = client.chat.completions.create(
             model="gpt-4.1",
-            messages=[{"role": "user", "content": peticion}],
+            messages=[{"role": "user", "content": construir_prompt("data/prompt3.txt", datos)}],
             temperature=0
         ).choices[0].message.content.strip()
 
@@ -94,6 +89,7 @@ def agente_amplio(cliente):
     except Exception as e:
         st.error(f"Error generando payload: {e}")
         return {}
+
 
 def transformar(payload_oai):
     nuevo_payload = {}
