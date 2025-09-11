@@ -79,33 +79,7 @@ def agente_amplio(cliente):
     traduciendo títulos, industrias, zonas y keywords al inglés.
     """
     datos = vars(cliente)
-    peticion = f"""
-        Eres un asistente que convierte las respuestas de un cliente en un payload válido 
-        para la API de Apollo (endpoint /contacts/search o /mixed_people/search).
-
-        Recibirás respuestas del usuario en español, pero tu tarea es devolver un JSON
-        válido para Apollo. Antes de devolverlo, TRADUCE automáticamente todos los títulos,
-        industrias, ubicaciones y keywords al inglés usando términos que Apollo reconoce.
-
-        Tengo esta estructura de respuestas de usuario:
-            - industria: {datos['industria']}
-            - postores: {datos['postores']}
-            - producto: {datos['producto']}
-            - zona: {datos['zona']}
-            - tamanio: {datos['tamanio']}
-
-        Necesito que transformes esas respuestas en un JSON válido con filtros amplios para Apollo.
-            - Usa SOLO los campos que Apollo acepta: q_title, organization_keywords, q_country, organization_num_employees_ranges, q_organization_domains_list.
-            - Traduce títulos, ubicaciones y keywords al inglés, usando términos generales que maximicen coincidencias.
-            - Para títulos muy específicos, agrégalos en forma general también.
-            - Para el tamaño de empresa, incluye rangos que abarquen el indicado y uno arriba y uno abajo.
-            - Para keywords de productos/servicios, incluye términos amplios relacionados.
-            - Para zonas, incluye también el país si aplica.
-            - Incluye paginación por defecto: "page": 1, "per_page": 25.
-            - No incluyas sort_by_field ni sort_ascending.
-
-        La salida debe ser EXCLUSIVAMENTE un JSON válido.
-        """
+    peticion = construir_prompt("data/prompt3.txt",datos)
 
     try:
         respuesta = client.chat.completions.create(
