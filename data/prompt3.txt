@@ -19,7 +19,7 @@ Necesito que transformes esas respuestas en un JSON válido con filtros amplios 
     - Para el tamaño de empresa, incluye rangos que abarquen el indicado y uno arriba y uno abajo.
     - Para keywords de productos/servicios, incluye términos amplios relacionados.
     - Para zonas, incluye también el país si aplica.
-    - Incluye paginación por defecto: "page": 1, "per_page": 25.
+            - Incluye paginación por defecto: "page": 1, "per_page": 100.
     - No incluyas sort_by_field ni sort_ascending.
 
 La salida debe ser EXCLUSIVAMENTE un JSON válido.
