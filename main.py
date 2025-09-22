@@ -178,9 +178,9 @@ zona = st.sidebar.text_input("Zona de cobertura",
 tamanio = st.sidebar.pills("Tamaño del cliente", ["Pequeño", "Mediano", "Grande"], selection_mode="multi")
 
 acuerdo = st.sidebar.checkbox("Confirmo que comprendo y acepto que los prospectos son generados automáticamente " \
-                      "por Inteligencia Artificial (IA) mediante análisis de fuentes públicas.  " \
-                      "La información debe ser verificada antes de ser utilizada, XentraliA no garantiza precisión ni disponibilidad de datos. " \
-                      "Me comprometo a cumplir con leyes aplicables de protección de datos.")
+                              "por Inteligencia Artificial (IA) mediante análisis de fuentes públicas.  " \
+                                "La información debe ser verificada antes de ser utilizada, XentraliA no garantiza precisión ni disponibilidad de datos. " \
+                                    "Me comprometo a cumplir con leyes aplicables de protección de datos.")
 
 
 if acuerdo:
@@ -200,6 +200,8 @@ if acuerdo:
                     df = pd.json_normalize(json_path["contacts"])
                 else:
                     df = pd.DataFrame()  # Vacío si no hay contactos
+                
+                st.dataframe(df)
 
                 df_filtrado = df[
                     (df["name"].notna()) &
@@ -224,10 +226,10 @@ if acuerdo:
                     "city", "state", "country",
                     "email", "linkedin_url", "organization.linkedin_url"
                 ]
-                df_final = df_filtrado[columnas_finales]
+                df = df_filtrado[columnas_finales]
 
                 # Guardar a CSV
-                csv_completo = df_final.to_csv(index=False)
+                csv_completo = df.to_csv(index=False)
        
                 st.success("Clientes encontrados")
                 st.dataframe(df)
