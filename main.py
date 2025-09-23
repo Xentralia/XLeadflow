@@ -92,16 +92,7 @@ def agente_payload(cliente):
         st.error(f"Error generando payload: {e}")
         return {}
 
-def transformar(payload_oai):
-    nuevo_payload = {}
-    for k, v in payload_oai.items():
-        if isinstance(v, list) and len(v) > 1 and k not in ["page", "per_page"]:
-            nuevo_payload[k] = {"or": v}
-        else:
-            nuevo_payload[k] = v
-    return nuevo_payload
-
-def apollo(payload_nuevo):
+def apollo_personas(payload_nuevo):
     url = "https://api.apollo.io/api/v1/mixed_people/search"
 
     headers = {
