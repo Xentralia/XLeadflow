@@ -61,32 +61,23 @@ def lista2(ruta: str):
     opciones = [item.strip().strip('"') for item in texto.split(",") if item.strip()]
     return opciones
 
-def agente(cliente):
+def agente_seeker(cliente):
     datos = vars(cliente)
-    peticion = construir_prompt("data/prompt2.txt", datos)
     try:
-        traductor = client.chat.completions.create(
+        seeker = client.chat.completions.create(
             model="gpt-4.1",
             messages=[{"role": "user", 
-                       "content": peticion}
-                    ],
+                       "content": construir_prompt("data/prompt2.txt", datos)}],
             temperature=0
         )
-        respuesta = traductor.choices[0].message.content.strip()
-
-        try:
-            payload = json.loads(respuesta)
-        except json.JSONDecodeError:
-            raise ValueError(f"No se pudo convertir a JSON: {respuesta}")
-        return payload
-
+        respuesta = seeker.choices[0].message.content.strip()
+        return respuesta
     except Exception as e:
         st.error(f"Algo alió mal. {str(e)}")
         return None
     
-def agente_amplio(cliente):
+def agente_payload(cliente):
     datos = vars(cliente)
-
     try:
         respuesta = client.chat.completions.create(
             model="gpt-4.1",
@@ -176,8 +167,11 @@ if acuerdo:
 
             with st.spinner("Recopilando información..."):
                 cliente = Cliente(industria, postores, producto, zona, tamanio)
+                #Buscamos la explicación
+                p3 = agente_seeker(cliente)
+
                 #Normalizamos los datos
-                p4 = agente_amplio(cliente)
+                p4 = agente_payload(cliente)
                 print(p4)
                 # Rescatamos la normalización y hacemos la consulta
                 json_path = apollo_contact(p4)
@@ -205,19 +199,20 @@ if acuerdo:
                 csv_completo = df.to_csv(index=False)
        
                 st.success("Clientes encontrados")
+                st.markdown(p3)
                 st.dataframe(df_filtrado)
 
                 iz, der = st.columns([1,1], gap="small")
                 with iz:
                     st.download_button(
-                        label = "Info completa",
-                        data = str(json_path),
-                        file_name = f"información_{cliente.industria}.txt",
+                        label = "Sólo explicación",
+                        data = p3,
+                        file_name = f"explicacion_{cliente.industria}.txt",
                         mime = "text/plain"
                     )
                 with der:
                     st.download_button(
-                        label="Sólo leads en CSV",
+                        label="Sólo leads",
                         data= csv_completo,
                         file_name=f"leads_{cliente.industria}.csv",
                         mime="text/csv"
