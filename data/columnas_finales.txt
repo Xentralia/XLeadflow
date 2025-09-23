@@ -1,0 +1,9 @@
+"name",
+"title",
+"organization_name",
+"linkedin_url",
+"organization.linkedin_url",
+"city",
+"state",
+"country",
+"email"

@@ -50,6 +50,17 @@ def instrucciones():
     for linea in file:
         st.markdown(linea)
 
+def listas(archivo: str):
+    if not os.path.exists(archivo):
+        raise FileNotFoundError(f"El archivo {archivo} no existe.")
+    with open(archivo, 'r', encoding='utf-8') as f:
+        return f.read()
+    
+def lista2(ruta: str):
+    texto = ''.join(listas(ruta))
+    opciones = [item.strip().strip('"') for item in texto.split(",") if item.strip()]
+    return opciones
+
 def agente(cliente):
     datos = vars(cliente)
     peticion = construir_prompt("data/prompt2.txt", datos)
@@ -90,7 +101,6 @@ def agente_amplio(cliente):
         st.error(f"Error generando payload: {e}")
         return {}
 
-
 def transformar(payload_oai):
     nuevo_payload = {}
     for k, v in payload_oai.items():
@@ -99,7 +109,6 @@ def transformar(payload_oai):
         else:
             nuevo_payload[k] = v
     return nuevo_payload
-
 
 def apollo(payload_nuevo):
     url = "https://api.apollo.io/api/v1/mixed_people/search"
@@ -143,26 +152,8 @@ st.sidebar.markdown("# Encontremos a tus clientes ideales")
 st.sidebar.header("Completa estos datos clave:")
 
 industria = st.sidebar.selectbox("Industria principal:", 
-                                ["Agroindustria", "Alimentos", "Arquitectura", "Artes/Cultural", "Automotriz",
-                                 "Bebidas", "Bienes Raíces",
-                                 "Ciberseguridad", "Construcción", "Consultoría", "Contabilidad",
-                                 "Diseño", "Dispositivos Médicos",
-                                 "e-commerce", "e-learning", "Educación", "Energía", "Entretenimiento",
-                                 "Farmacéutica", "Finanzas", "Fintech", "Fitness/Wellness",
-                                 "Gobierno",
-                                 "Hardware Tecnológico", "Hospitales/Clínicas", "Hotelería",
-                                 "Industrial", "Inteligencia Artificial",
-                                 "Legal", "Logística",
-                                 "Manufactura", "Medios", "Moda",
-                                 "Nutrición",
-                                 "ONGs/Social", "Organismos Gubernamentales",
-                                 "Plásticos", "Publicidad/Marketing",
-                                 "Química",
-                                 "Recursos Humanos", "Retail/Comercio",
-                                 "Salud", "Seguros", "Software", "Suplementos",
-                                 "Tecnología", "Telecomunicaciones", "Textil", "Transporte", "Turismo",
-                                 "Videojuegos", "Otra"],
-                                index=None,
+                                lista2("data/lista_ind.txt"), 
+                                index=None, 
                                 placeholder="¿En qué sector operas?")
 
 if industria == "Otra":
@@ -177,11 +168,7 @@ zona = st.sidebar.text_input("Zona de cobertura",
 
 tamanio = st.sidebar.pills("Tamaño del cliente", ["Pequeño", "Mediano", "Grande"], selection_mode="multi")
 
-acuerdo = st.sidebar.checkbox("Confirmo que comprendo y acepto que los prospectos son generados automáticamente " \
-                              "por Inteligencia Artificial (IA) mediante análisis de fuentes públicas.  " \
-                                "La información debe ser verificada antes de ser utilizada, XentraliA no garantiza precisión ni disponibilidad de datos. " \
-                                    "Me comprometo a cumplir con leyes aplicables de protección de datos.")
-
+acuerdo = st.sidebar.checkbox(listas("data/acuerdo.txt"))
 
 if acuerdo:
     if st.sidebar.button("🔍 Buscar Prospectos"):
@@ -200,39 +187,25 @@ if acuerdo:
                     df = pd.json_normalize(json_path["contacts"])
                 else:
                     df = pd.DataFrame()  # Vacío si no hay contactos
-                
-                st.dataframe(df)
 
                 df_filtrado = df[
-                    (df["name"].notna()) &
-                    (df["linkedin_url"].notna()) &
-                    (df["title"].notna()) &
-                    (df["organization_name"].notna()) &
-                    (df["city"].notna()) &
-                    (df["state"].notna()) &
-                    (df["country"].notna()) &
-                    (df["email"].notna()) &
-                    (df["email_from_customer"].notna()) &
-                    (df["account.linkedin_url"].notna()) &
-                    (df["account.facebook_url"].notna()) &
-                    (df["account.primary_phone.number"].notna()) &
-                    (df["account.phone"].notna()) &
-                    (df["organization.linkedin_url"].notna())
+                    (df["name"].notna()) & #
+                    (df["title"].notna()) & #
+                    (df["organization_name"].notna()) & #
+                    (df["linkedin_url"].notna()) & #
+                    (df["city"].notna()) & #
+                    (df["state"].notna()) & #
+                    (df["country"].notna()) & #
+                    (df["email"].notna()) & #
+                    (df["organization.linkedin_url"].notna()) #
                 ]
-
-                columnas_finales = [
-                    "name", "first_name", "last_name",
-                    "title", "organization_name",
-                    "city", "state", "country",
-                    "email", "linkedin_url", "organization.linkedin_url"
-                ]
-                df = df_filtrado[columnas_finales]
+                df = df_filtrado[lista2("data/columnas_finales.txt")]
 
                 # Guardar a CSV
                 csv_completo = df.to_csv(index=False)
        
                 st.success("Clientes encontrados")
-                st.dataframe(df)
+                st.dataframe(df_filtrado)
 
                 iz, der = st.columns([1,1], gap="small")
                 with iz:
