@@ -10,4 +10,5 @@ Lo que necesito es:
 
 Toda esa información la necesito como datos que se puedan poner en un documento de texto con una breve descripción de quienes son y a lo que se dedican.
 
-Algo importante es que no deberás agregar saludos, despedidas o resúmenes, solamente la información, no harás preguntas al inicio o al final.
+Algo importante es que no deberás agregar saludos, despedidas o resúmenes, solamente la frase "Basados en tus respuestas te recomendamos:" antes de
+la información y la frase "Encontramos esto basados en tus respuestas." y no harás preguntas al inicio o al final.

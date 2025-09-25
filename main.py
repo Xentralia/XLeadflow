@@ -31,7 +31,7 @@ load_dotenv(dotenv_path, override=True)
 client = OpenAI(api_key = os.getenv("OPENAI_API_KEY"))
 apollo_key = os.getenv("APOLLO_API_KEY")
 
-st.title("📝 Herramienta especializada en prospección de ventas a empresas, no a consumidores.")
+st.title("Generador de leads 📝")
 
 # ------------------------------ Estructuras -----------------------------------------
 class Cliente:
@@ -91,6 +91,13 @@ def agente_payload(cliente):
     except Exception as e:
         st.error(f"Error generando payload: {e}")
         return {}
+    
+def denue(entidad):
+    token = os.getenv("DENUE_TOKEN")
+    url = f"https://www.inegi.org.mx/app/api/denue/v1/consulta/BuscarEntidad/todos/{entidad}/1/100000000/{token}"
+
+    response = requests.get(url)
+    return response.json()
 
 def apollo_personas(payload_nuevo):
     url = "https://api.apollo.io/api/v1/mixed_people/search"
@@ -173,6 +180,13 @@ if acuerdo:
                 else:
                     df = pd.DataFrame()  # Vacío si no hay contactos
 
+                with open("data/estados.json", "r", encoding="utf-8") as f:
+                    estados_dict = json.load(f)
+                
+                #entidad = estados_dict["Zacatecas"]
+                #denue_data = denue(entidad)
+                #print(denue_data)
+
                 df_filtrado = df[
                     (df["name"].notna()) & #
                     (df["title"].notna()) & #
@@ -191,7 +205,7 @@ if acuerdo:
        
                 st.success("Clientes encontrados")
                 st.markdown(p3)
-                st.dataframe(df_filtrado)
+                st.dataframe(df)
 
                 iz, der = st.columns([1,1], gap="small")
                 with iz:
