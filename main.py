@@ -91,7 +91,22 @@ def agente_payload(cliente):
     except Exception as e:
         st.error(f"Error generando payload: {e}")
         return {}
-    
+
+def agente_geolocalizador(cliente):
+    datos = vars(cliente)
+    try:
+        geolocalizador = client.chat.completions.create(
+            model="gpt-4.1",
+            messages=[{"role": "user", 
+                       "content": construir_prompt("data/prompt4.txt", datos)}],
+            temperature=0
+        )
+        respuesta = geolocalizador.choices[0].message.content.strip()
+        return respuesta
+    except Exception as e:
+        st.error(f"Algo alió mal. {str(e)}")
+        return None
+
 def denue(entidad):
     token = os.getenv("DENUE_TOKEN")
     url = f"https://www.inegi.org.mx/app/api/denue/v1/consulta/BuscarEntidad/todos/{entidad}/1/100000000/{token}"
